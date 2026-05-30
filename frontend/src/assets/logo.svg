@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Outer diamond mapping grid -->
+  <path d="M50 10 L90 50 L50 90 L10 50 Z" stroke="#0f4c81" stroke-width="2" stroke-linejoin="round" />
+  
+  <!-- Outer contour rings -->
+  <path d="M50 25 L75 50 L50 75 L25 50 Z" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3 3" />
+  
+  <!-- Crosshairs / Grid lines -->
+  <line x1="50" y1="10" x2="50" y2="90" stroke="#0f4c81" stroke-width="1.5" />
+  <line x1="10" y1="50" x2="90" y2="50" stroke="#0f4c81" stroke-width="1.5" />
+  
+  <!-- Laser/digital line from center -->
+  <line x1="50" y1="50" x2="78" y2="22" stroke="#ef4444" stroke-width="2" />
+  
+  <!-- Core Survey Point (Total Station Prism center) -->
+  <circle cx="50" cy="50" r="10" fill="#0f4c81" />
+  <circle cx="50" cy="50" r="5" fill="#f59e0b" />
+  <circle cx="50" cy="50" r="2" fill="#ffffff" />
+</svg>
