@@ -5,7 +5,7 @@ const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved ? saved === 'dark' : true; // Default to dark mode for premium look
+    return saved ? saved === 'dark' : false; // Default to light mode for white corporate theme
   });
 
   useEffect(() => {

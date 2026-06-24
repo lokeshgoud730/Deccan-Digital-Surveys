@@ -11,11 +11,17 @@ export default function About() {
     // Log visitor hit
     api.post('/log-visitor/', { page: 'About' }).catch(() => {});
 
-    // Fetch About Us content from backend
-    api.get('/about/')
+    // Fetch About Us content from Settings CMS
+    api.get('/settings/')
       .then((res) => {
         if (res.data.length > 0) {
-          setAboutData(res.data[0]);
+          const s = res.data[0];
+          setAboutData({
+            mission: s.about_mission,
+            vision: s.about_vision,
+            years_experience: s.stat_experience_years,
+            company_history: s.about_description
+          });
         }
         setLoading(false);
       })

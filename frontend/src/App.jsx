@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import ProtectedRoute from './components/ProtectedRoute';
+import AIChatbot from './components/AIChatbot';
 
 // Pages
 import Home from './pages/Home';
@@ -15,7 +16,9 @@ import Experience from './pages/Experience';
 import BookSurvey from './pages/BookSurvey';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
+import TrackBooking from './pages/TrackBooking';
 import AdminDashboard from './pages/AdminDashboard';
+
 
 export default function App() {
   return (
@@ -36,6 +39,8 @@ export default function App() {
               <Route path="/book-survey" element={<BookSurvey />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/track" element={<TrackBooking />} />
+
               
               {/* Admin Dashboard Protected Route */}
               <Route 
@@ -51,6 +56,9 @@ export default function App() {
 
           {/* Floating WhatsApp Action Button */}
           <WhatsAppButton />
+
+          {/* Floating AI Chatbot Assistant */}
+          <AIChatbot />
 
           {/* Footer Information */}
           <Footer />

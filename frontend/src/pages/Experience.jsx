@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
-import { Trophy, Calendar, Plus, Trash2, Milestone, Loader, Sparkles, TrendingUp } from 'lucide-react';
+import { Trophy, Calendar, Plus, Trash2, Milestone, Loader, Sparkles, TrendingUp, Compass } from 'lucide-react';
+import Skeleton from '../components/Skeleton';
 
 export default function Experience() {
   const [items, setItems] = useState([]);
@@ -22,9 +23,7 @@ export default function Experience() {
     // Log visitor hit
     api.post('/log-visitor/', { page: 'Experience' }).catch(() => {});
 
-    // Check auth
-    const token = localStorage.getItem('access_token');
-    setIsAdmin(!!token);
+    setIsAdmin(localStorage.getItem('is_admin') === 'true');
 
     fetchExperience();
   }, []);
@@ -218,8 +217,8 @@ export default function Experience() {
 
       {/* Main grids */}
       {loading ? (
-        <div className="flex items-center justify-center h-60">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-survey-gold" />
+        <div className="w-full max-w-xl mx-auto py-8">
+          <Skeleton type="text" count={6} />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 text-left">

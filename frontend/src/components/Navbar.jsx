@@ -16,7 +16,9 @@ export default function Navbar() {
     { name: 'Gallery', path: '/gallery' },
     { name: 'Experience', path: '/experience' },
     { name: 'Book Survey', path: '/book-survey' },
+    { name: 'Track Survey', path: '/track' },
     { name: 'Contact', path: '/contact' },
+
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -59,7 +61,7 @@ export default function Navbar() {
             ))}
 
             {/* Quick dashboard shortcut if logged in */}
-            {localStorage.getItem('access_token') && (
+            {localStorage.getItem('is_admin') === 'true' && (
               <Link
                 to="/admin"
                 className="flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
@@ -118,7 +120,7 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-          {localStorage.getItem('access_token') && (
+          {localStorage.getItem('is_admin') === 'true' && (
             <Link
               to="/admin"
               onClick={() => setIsOpen(false)}

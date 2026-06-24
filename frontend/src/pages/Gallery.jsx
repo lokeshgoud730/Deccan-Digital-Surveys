@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
-import { Plus, Trash2, Eye, X, ZoomIn, ZoomOut, Upload, Loader } from 'lucide-react';
+import { Plus, Trash2, Eye, X, ZoomIn, ZoomOut, Upload, Loader, FileImage } from 'lucide-react';
+import Skeleton from '../components/Skeleton';
 
 export default function Gallery() {
   const [images, setImages] = useState([]);
@@ -17,7 +18,8 @@ export default function Gallery() {
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newCategory, setNewCategory] = useState('Land');
-  const [newImgUrl, setNewImgUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
@@ -25,8 +27,7 @@ export default function Gallery() {
     api.post('/log-visitor/', { page: 'Gallery' }).catch(() => {});
 
     // Check if user is logged in
-    const token = localStorage.getItem('access_token');
-    setIsAdmin(!!token);
+    setIsAdmin(localStorage.getItem('is_admin') === 'true');
 
     fetchGallery();
   }, []);
@@ -44,30 +45,63 @@ export default function Gallery() {
       });
   };
 
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
   const handleAddImage = async (e) => {
     e.preventDefault();
     setUploadError('');
     setUploadLoading(true);
 
-    // Validate URL or provide fallback
-    const imgPath = newImgUrl || '/images/hero_bg.png';
+    if (!selectedFile) {
+      setUploadError('Please select or drag an image file to upload.');
+      setUploadLoading(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('title', newTitle);
+    formData.append('description', newDesc);
+    formData.append('category', newCategory);
+    formData.append('image', selectedFile);
 
     try {
-      await api.post('/gallery/', {
-        title: newTitle,
-        description: newDesc,
-        category: newCategory,
-        image_url: imgPath
+      await api.post('/gallery/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       
       // Reset form and reload
       setNewTitle('');
       setNewDesc('');
-      setNewImgUrl('');
+      setSelectedFile(null);
       setShowAddForm(false);
       fetchGallery();
     } catch (err) {
-      setUploadError(err.response?.data?.detail || 'Failed to add image. Ensure you are authorized.');
+      setUploadError(err.response?.data?.detail || 'Failed to upload image. Ensure you are logged in as admin.');
     } finally {
       setUploadLoading(false);
     }
@@ -129,7 +163,7 @@ export default function Gallery() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="max-w-lg mx-auto glass border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl shadow-lg overflow-hidden text-left"
+            className="max-w-xl mx-auto glass border border-slate-200 dark:border-zinc-800 p-6 rounded-2xl shadow-lg overflow-hidden text-left"
           >
             <h3 className="font-extrabold text-lg text-slate-900 dark:text-zinc-50 mb-4 flex items-center space-x-2">
               <Upload size={18} className="text-survey-gold" />
@@ -149,7 +183,7 @@ export default function Gallery() {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. Boundary demarcation at Jangaon"
-                  className="block w-full px-3 py-2 border border-slate-300 rounded-lg bg-white dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
 
@@ -164,37 +198,58 @@ export default function Gallery() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-zinc-300 mb-1">Category</label>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg bg-white dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="Land">Land</option>
-                    <option value="Layout">Layout</option>
-                    <option value="Road & Rail">Road & Rail</option>
-                    <option value="Drone Mapping">Drone Mapping</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-zinc-300 mb-1">Category</label>
+                <select
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="Land">Land</option>
+                  <option value="Layout">Layout</option>
+                  <option value="Road & Rail">Road & Rail</option>
+                  <option value="Drone Mapping">Drone Mapping</option>
+                </select>
+              </div>
 
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-zinc-300 mb-1">Image URL Path</label>
+              {/* Drag and Drop Zone */}
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-zinc-300 mb-1">Upload File (Drag & Drop)</label>
+                <div
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer transition ${
+                    dragActive ? "border-primary bg-blue-50/25 dark:bg-zinc-850/50" : "border-slate-300 dark:border-zinc-700 hover:border-primary"
+                  }`}
+                  onClick={() => document.getElementById("file-input").click()}
+                >
                   <input
-                    type="text"
-                    value={newImgUrl}
-                    onChange={(e) => setNewImgUrl(e.target.value)}
-                    placeholder="/images/hero_bg.png"
-                    className="block w-full px-3 py-2 border border-slate-300 rounded-lg bg-white dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    id="file-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
                   />
+                  {selectedFile ? (
+                    <div className="flex items-center space-x-2 text-primary dark:text-survey-gold">
+                      <FileImage size={24} />
+                      <span className="font-bold text-xs">{selectedFile.name} ({(selectedFile.size/1024).toFixed(1)} KB)</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Upload className="mx-auto text-slate-400" size={32} />
+                      <p className="text-xs text-slate-500">Drag & Drop your image here or <span className="text-primary dark:text-survey-gold font-bold underline">browse files</span></p>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <button
                 type="submit"
                 disabled={uploadLoading}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition shadow-sm flex items-center justify-center space-x-1.5"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition shadow-sm flex items-center justify-center space-x-1.5"
               >
                 {uploadLoading ? <Loader className="animate-spin" size={16} /> : <span>Publish Image</span>}
               </button>
@@ -222,57 +277,60 @@ export default function Gallery() {
 
       {/* Photo Grid */}
       {loading ? (
-        <div className="flex items-center justify-center h-60">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-survey-gold" />
+        <div className="w-full pt-8">
+          <Skeleton type="card" count={6} />
         </div>
       ) : (
         <motion.div 
           layout
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
         >
-          {filteredImages.map((img) => (
-            <motion.div
-              layout
-              key={img.id}
-              className="group relative cursor-pointer glass border border-slate-200/50 dark:border-zinc-800/50 rounded-2xl overflow-hidden shadow hover:shadow-lg transition-all duration-300 h-64"
-              onClick={() => {
-                setLightboxImage(img);
-                setZoomLevel(1);
-              }}
-            >
-              {/* Photo */}
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                style={{ backgroundImage: `url('${img.image_url}')` }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              
-              {/* Detail overlays on hover */}
-              <div className="absolute bottom-0 left-0 w-full p-4 text-left translate-y-4 group-hover:translate-y-0 transition-transform duration-300 opacity-0 group-hover:opacity-100 flex flex-col justify-end h-full">
-                <span className="text-[10px] bg-survey-gold text-slate-950 font-bold px-2 py-0.5 rounded w-fit mb-1.5">
-                  {img.category}
-                </span>
-                <h3 className="font-extrabold text-white text-lg line-clamp-1">{img.title}</h3>
-                <p className="text-xs text-slate-300 line-clamp-2 mt-1">{img.description}</p>
-              </div>
+          {filteredImages.map((img) => {
+            const imgPath = img.image || img.image_url;
+            return (
+              <motion.div
+                layout
+                key={img.id}
+                className="group relative cursor-pointer glass border border-slate-200/50 dark:border-zinc-800/50 rounded-2xl overflow-hidden shadow hover:shadow-lg transition-all duration-300 h-64"
+                onClick={() => {
+                  setLightboxImage(img);
+                  setZoomLevel(1);
+                }}
+              >
+                {/* Photo */}
+                <div 
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                  style={{ backgroundImage: `url('${imgPath}')` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                {/* Detail overlays on hover */}
+                <div className="absolute bottom-0 left-0 w-full p-4 text-left translate-y-4 group-hover:translate-y-0 transition-transform duration-300 opacity-0 group-hover:opacity-100 flex flex-col justify-end h-full">
+                  <span className="text-[10px] bg-survey-gold text-slate-950 font-bold px-2 py-0.5 rounded w-fit mb-1.5">
+                    {img.category}
+                  </span>
+                  <h3 className="font-extrabold text-white text-lg line-clamp-1">{img.title}</h3>
+                  <p className="text-xs text-slate-300 line-clamp-2 mt-1">{img.description}</p>
+                </div>
 
-              {/* Top Right Admin Actions / Eye icon */}
-              <div className="absolute top-3 right-3 flex items-center space-x-2">
-                <span className="p-2 bg-slate-950/70 text-white rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition duration-300 shadow">
-                  <Eye size={14} />
-                </span>
-                {isAdmin && (
-                  <button
-                    onClick={(e) => handleDeleteImage(img.id, e)}
-                    className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow transition duration-200"
-                    title="Delete Image"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                {/* Top Right Admin Actions / Eye icon */}
+                <div className="absolute top-3 right-3 flex items-center space-x-2">
+                  <span className="p-2 bg-slate-950/70 text-white rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition duration-300 shadow">
+                    <Eye size={14} />
+                  </span>
+                  {isAdmin && (
+                    <button
+                      onClick={(e) => handleDeleteImage(img.id, e)}
+                      className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow transition duration-205"
+                      title="Delete Image"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
           
           {filteredImages.length === 0 && (
             <div className="col-span-full py-16 text-center text-slate-500">
@@ -328,9 +386,9 @@ export default function Gallery() {
               className="max-w-4xl max-h-[70vh] transition-transform duration-200"
             >
               <img 
-                src={lightboxImage.image_url} 
+                src={lightboxImage.image || lightboxImage.image_url} 
                 alt={lightboxImage.title} 
-                className="max-w-full max-h-[70vh] rounded-lg shadow-2xl object-contain border border-zinc-800"
+                className="max-w-full max-h-[70vh] rounded-lg shadow-2xl object-contain border border-zinc-850"
               />
             </motion.div>
 

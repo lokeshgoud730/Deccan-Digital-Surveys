@@ -7,7 +7,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'survey_backend.settings')
 django.setup()
 
-from api.models import ServiceContent, ExperienceItem, AboutContent, GalleryImage
+from api.models import (
+    ServiceContent, ExperienceItem, AboutContent, GalleryImage,
+    WebsiteSettings, Testimonial, TeamMember
+)
 
 def seed_database():
     print("Seeding database...")
@@ -16,8 +19,27 @@ def seed_database():
     ServiceContent.objects.all().delete()
     ExperienceItem.objects.all().delete()
     AboutContent.objects.all().delete()
+    GalleryImage.objects.all().delete()
+    WebsiteSettings.objects.all().delete()
+    Testimonial.objects.all().delete()
+    TeamMember.objects.all().delete()
     
-    # 2. Seed Services (12 Services)
+    # 2. Seed Website Settings (CMS Singleton)
+    WebsiteSettings.objects.create(
+        hero_title="Deccan Digital Surveys",
+        hero_subtitle="Precision DGPS & Total Station Land Surveying Services Across Telangana & Andhra Pradesh",
+        hero_primary_btn="Book Survey",
+        hero_secondary_btn="Contact Us",
+        about_description="Deccan Digital Surveys was founded in 2018 with a vision to revolutionize land measurement in India. By introducing advanced electronic distance measurements and satellite-based coordinates (DGPS/GNSS), we helped eliminate boundaries errors and legal disputes. Over the past 8 years, our team has grown from 2 surveyors to a multidisciplinary engineering team with regional offices in Jangaon and Siddipet.",
+        about_mission="To deliver exceptionally precise, reliable, and technology-driven surveying solutions that facilitate infrastructure growth, secure land ownership, and optimize urban development across India.",
+        about_vision="To be the premier digital surveying agency in India, recognized for integrity, extreme precision, and seamless delivery of layout approvals and engineering maps.",
+        stat_experience_years=8,
+        stat_projects_completed="1,200+",
+        stat_clients_served="950+"
+    )
+    print("Seeded Website Settings (CMS).")
+
+    # 3. Seed Services (12 Services)
     services_data = [
         {
             "title": "Land Survey",
@@ -27,7 +49,9 @@ def seed_database():
             "process": "Historical document analysis; Site reconnaissance; Boundary measurement with GPS/DGPS; Precision Total Station mapping; Draft preparation; Certified map delivery.",
             "benefits": "Resolves boundary disputes; Assures precise land area calculations; Required for legal sales and mortgages; Prevents future encroachment issues.",
             "equipment": "CHNAV DGPS Receiver, Leica Flexline TS07 Total Station",
-            "image_url": "/images/services/land_survey.png"
+            "image_url": "/images/services/land_survey.png",
+            "technical_specifications": "Accuracy: Horizontal +/- 8mm + 1ppm, Vertical +/- 15mm + 1ppm; Coordinate System: UTM / WGS84 or local grid system.",
+            "equipment_details": "CHCNAV i90 IMU-RTK GNSS Receiver, Leica FlexLine TS07 reflectorless total station."
         },
         {
             "title": "Layout Survey (DTCP, HMDA, YTDA, Farm Lands)",
@@ -37,7 +61,9 @@ def seed_database():
             "process": "Boundary verification; Plan design matching authority rules; Physical staking of roads and plots; Boundary stone markings; Approval drawing creation.",
             "benefits": "Ensures quick approvals from HMDA, DTCP, or YTDA; Maximum layout efficiency; Clear physical identification of plots for buyers.",
             "equipment": "Trimble R12 DGPS, Leica Total Station",
-            "image_url": "/images/services/layout_survey.png"
+            "image_url": "/images/services/layout_survey.png",
+            "technical_specifications": "Design Standards: Conforms to HMDA/DTCP layout zoning bylaws. Point Staking Tolerance: +/- 5mm.",
+            "equipment_details": "Trimble R12 GNSS system with Trimble Access controller."
         },
         {
             "title": "Tippon Survey",
@@ -47,7 +73,9 @@ def seed_database():
             "process": "Collection of government Tippon sheets; DGPS positioning of key coordinate points; Comparison of revenue dimensions with actual dimensions; Correction reporting and map updates.",
             "benefits": "Legal protection against title disputes; Accurate correction of land area records; Resolves ancestral boundary confusion.",
             "equipment": "High-precision DGPS, Handheld Laser Distance Meters",
-            "image_url": "/images/services/tippon_survey.png"
+            "image_url": "/images/services/tippon_survey.png",
+            "technical_specifications": "Record Alignment: Legacy revenue chain conversion mapping to WGS84 coordinate systems.",
+            "equipment_details": "South Galaxy G1 DGPS, Leica DISTO D2 laser meters."
         },
         {
             "title": "Canal Survey",
@@ -57,7 +85,9 @@ def seed_database():
             "process": "Baseline alignment staking; Cross-section leveling at regular intervals; Long-section profile generation; Silt volume calculations.",
             "benefits": "Optimized hydraulic flow; Prevents overflow risks; Accurate estimation of excavation/silt removal volumes.",
             "equipment": "Auto Levels, Leica Total Stations, RTK DGPS",
-            "image_url": "/images/services/canal_survey.png"
+            "image_url": "/images/services/canal_survey.png",
+            "technical_specifications": "Vertical Level Accuracy: +/- 1.5mm double-run leveling per km.",
+            "equipment_details": "Sokkia B40A automatic levels, Leica TS07 Total Station."
         },
         {
             "title": "Municipal Survey",
@@ -67,7 +97,9 @@ def seed_database():
             "process": "Urban base map creation; Property boundary digitization; Geographic Information System (GIS) data matching; Road alignment surveying.",
             "benefits": "Increases property tax collections; Avoids public land encroachment; Streamlines municipal utility development.",
             "equipment": "Trimble S5 Robotic Total Station, GIS Data Controllers",
-            "image_url": "/images/services/municipal_survey.png"
+            "image_url": "/images/services/municipal_survey.png",
+            "technical_specifications": "Feature Mapping Tolerance: Class 1 Surveying Standard (+/- 10mm).",
+            "equipment_details": "Trimble S5 Robotic Total Station, Trimble TSC7 controller."
         },
         {
             "title": "Municipal Plans",
@@ -77,7 +109,9 @@ def seed_database():
             "process": "Site physical verification; CAD drafting of site plan and floor layouts; Building code compliance review; Digital submission package compilation.",
             "benefits": "Fast-tracked building permission approvals; Avoids code violations and fines; High-precision CAD drafts.",
             "equipment": "CAD Software, Laser Measures, Handheld GPS",
-            "image_url": "/images/services/municipal_plans.png"
+            "image_url": "/images/services/municipal_plans.png",
+            "technical_specifications": "CAD Output formats: DWG, DXF, PDF conforming to APDPMS/TS-bPASS formats.",
+            "equipment_details": "AutoCAD Map 3D, high-performance workstation computing."
         },
         {
             "title": "Gram Panchayat Plans",
@@ -87,7 +121,9 @@ def seed_database():
             "process": "Local village map matching; Plot boundary demarcation; Road width verification; Gram Panchayat format drawings.",
             "benefits": "Ensures legal permissions in rural sectors; Affordable plans; Avoids local government disputes.",
             "equipment": "GPS, Precision Survey Tapes, Total Stations",
-            "image_url": "/images/services/panchayat_plans.png"
+            "image_url": "/images/services/panchayat_plans.png",
+            "technical_specifications": "Zoning regulations matching rural village planning formats.",
+            "equipment_details": "Garmin GPSMAP 64csx, high-precision steel measurement bands."
         },
         {
             "title": "Earth Work Quantities",
@@ -97,7 +133,9 @@ def seed_database():
             "process": "Pre-excavation contour mapping; Post-excavation/grading surveys; 3D surface model comparisons in CAD; Volume calculation report production.",
             "benefits": "Saves excavation costs; Verification of contractor invoices; Precise material billing.",
             "equipment": "Contour DGPS, Drone Lidar, CAD Surface Modeling Software",
-            "image_url": "/images/services/earthwork.png"
+            "image_url": "/images/services/earthwork.png",
+            "technical_specifications": "Volume estimation error margin: < 2.5% calculated via tin volume surfaces.",
+            "equipment_details": "DJI Matrice 300 RTK with L1 Lidar sensor, Civil 3D software."
         },
         {
             "title": "Pipeline Survey",
@@ -107,7 +145,9 @@ def seed_database():
             "process": "Feasibility route study; High-precision corridor topographic survey; Obstacle identification; Centerline staking and easement mapping.",
             "benefits": "Avoids underground hazards; Optimal slope alignments; Clear right-of-way permissions.",
             "equipment": "Pipe Locators, RTK DGPS, Digital Levels",
-            "image_url": "/images/services/pipeline_survey.png"
+            "image_url": "/images/services/pipeline_survey.png",
+            "technical_specifications": "Utility Depth Verification: Up to 3 meters with Ground Penetrating Radar integration.",
+            "equipment_details": "RD8100 precision utility locator, Leica NA724 levels."
         },
         {
             "title": "Grid and Contour Survey",
@@ -117,7 +157,9 @@ def seed_database():
             "process": "Grid layout staking; Elevation readings at grid intersections; Coordinate contour interpolation; 3D elevation map generation.",
             "benefits": "Crucial for drainage planning; Prevents building structural issues; Complete 3D visualization of terrain.",
             "equipment": "Auto Levels, Leica TS07, Trimble DGPS",
-            "image_url": "/images/services/contour_survey.png"
+            "image_url": "/images/services/contour_survey.png",
+            "technical_specifications": "Grid Intervals: 5m, 10m, or 20m configurations. Contour intervals: 0.5m, 1m elevation curves.",
+            "equipment_details": "CHCNAV i90 DGPS, Sokkia levels, Civil 3D rendering engine."
         },
         {
             "title": "Road and Rail Survey",
@@ -127,7 +169,9 @@ def seed_database():
             "process": "Establishment of permanent survey benchmarks; Centerline mapping; Cross-section detailing; Structural setting out (bridges, culverts).",
             "benefits": "Ensures transit safety and design compliance; Minimizes construction errors; Optimizes logistics alignment.",
             "equipment": "Robotic Total Stations, DGPS, High Precision Digital Levels",
-            "image_url": "/images/services/road_rail_survey.png"
+            "image_url": "/images/services/road_rail_survey.png",
+            "technical_specifications": "Profile accuracy: +/- 2mm vertical control accuracy.",
+            "equipment_details": "Leica TS16 Robotic Total Station, Trimble DGPS."
         },
         {
             "title": "Venture Developments",
@@ -137,7 +181,9 @@ def seed_database():
             "process": "Boundary verification; Topographic contour mapping; Road network planning; Drainage flow staking; Individual plot markings.",
             "benefits": "Speeds up project marketing; Clear visual layout for potential buyers; Integrated utility planning.",
             "equipment": "DGPS, Drone Mapping, Dual Leica Total Stations",
-            "image_url": "/images/services/venture_development.png"
+            "image_url": "/images/services/venture_development.png",
+            "technical_specifications": "Integrated community layout matching state regulatory design standards.",
+            "equipment_details": "DJI Phantom 4 RTK, Leica Flexline TS07 Total Station, Trimble DGPS receivers."
         }
     ]
     
@@ -145,7 +191,7 @@ def seed_database():
         ServiceContent.objects.create(**item)
     print(f"Seeded {len(services_data)} services.")
     
-    # 3. Seed Experience Items (Stats and Timelines)
+    # 4. Seed Experience Items (Stats and Timelines)
     experience_data = [
         {
             "type": "STAT",
@@ -205,7 +251,7 @@ def seed_database():
         ExperienceItem.objects.create(**item)
     print(f"Seeded {len(experience_data)} experience items.")
     
-    # 4. Seed About us details
+    # 5. Seed About us details
     AboutContent.objects.create(
         mission="To deliver exceptionally precise, reliable, and technology-driven surveying solutions that facilitate infrastructure growth, secure land ownership, and optimize urban development across India.",
         vision="To be the premier digital surveying agency in India, recognized for integrity, extreme precision, and seamless delivery of layout approvals and engineering maps.",
@@ -214,7 +260,7 @@ def seed_database():
     )
     print("Seeded AboutUs content.")
     
-    # 5. Seed initial dummy Gallery Images pointing to assets
+    # 6. Seed initial dummy Gallery Images
     gallery_data = [
         {
             "title": "Layout Demarcation",
@@ -244,7 +290,60 @@ def seed_database():
     for item in gallery_data:
         GalleryImage.objects.create(**item)
     print("Seeded Gallery image data.")
+
+    # 7. Seed Testimonials (Premium Clients)
+    testimonials_data = [
+        {
+            "client_name": "Lokesh Goud",
+            "role": "Property Developer",
+            "review_text": "Deccan Digital Surveys did an amazing job mapping our 50-acre venture. The DGPS coordinate accuracy saved us boundary disputes and got our layouts cleared quickly by HMDA.",
+            "rating": 5,
+            "image_url": "/images/testimonials/avatar1.png"
+        },
+        {
+            "client_name": "Srinivas Reddy",
+            "role": "Agriculturalist",
+            "review_text": "Resolved a 10-year agricultural boundary dispute in Siddipet in just one afternoon. They compared revenue Tippon sheets with high-precision RTK coordinates. Excellent and polite team.",
+            "rating": 5,
+            "image_url": "/images/testimonials/avatar2.png"
+        },
+        {
+            "client_name": "Anitha Rao",
+            "role": "Villa Venture Owner",
+            "review_text": "Very professional, fast delivery of CAD drafts and contour elevations. Essential partner for modern architectural layouts and DTCP approval drawings.",
+            "rating": 5,
+            "image_url": "/images/testimonials/avatar3.png"
+        }
+    ]
+    for item in testimonials_data:
+        Testimonial.objects.create(**item)
+    print("Seeded Testimonials.")
+
+    # 8. Seed Team Members
+    team_data = [
+        {
+            "name": "K. Raghupathy",
+            "role": "Founder & Lead Surveyor",
+            "image_url": "/images/team/raghu.png",
+            "bio": "Over 15 years of land and revenue surveying experience. Specialist in Tippon coordinates mapping and regional zoning compliance."
+        },
+        {
+            "name": "M. Sandeep",
+            "role": "DGPS Specialist Engineer",
+            "image_url": "/images/team/sandeep.png",
+            "bio": "Expert in dual-frequency satellite GNSS/RTK systems and 3D terrain surface contour profiling."
+        }
+    ]
+    for item in team_data:
+        TeamMember.objects.create(**item)
+    print("Seeded Team Members.")
+    
+    # 9. Sync/Seed Admin User from Environment Configurations
+    from api.utils import create_or_update_admin
+    create_or_update_admin()
+    
     print("Database seeding completed successfully!")
 
 if __name__ == "__main__":
     seed_database()
+

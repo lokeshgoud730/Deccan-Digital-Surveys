@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
-import { ArrowRight, CheckCircle, Cpu, Calendar, X, Compass, Search } from 'lucide-react';
+import { ArrowRight, CheckCircle, Cpu, Calendar, X, Compass, Search, Camera, Trash2 } from 'lucide-react';
+import Skeleton from '../components/Skeleton';
 
 export default function Services() {
   const [services, setServices] = useState([]);
@@ -10,6 +11,66 @@ export default function Services() {
   const [selectedService, setSelectedService] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const isAdmin = localStorage.getItem('is_admin') === 'true';
+
+  const handleUpdateServiceImage = async (service, file, updateModal = false) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('title', service.title);
+    formData.append('slug', service.slug);
+    formData.append('description', service.description);
+    formData.append('detail_text', service.detail_text);
+    formData.append('process', service.process);
+    formData.append('benefits', service.benefits);
+    formData.append('equipment', service.equipment);
+    formData.append('technical_specifications', service.technical_specifications || '');
+    formData.append('equipment_details', service.equipment_details || '');
+    formData.append('sample_photos_json', service.sample_photos_json || '[]');
+    formData.append('image', file);
+
+    try {
+      const res = await api.put(`/services/${service.slug}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setServices(prev => prev.map(s => s.slug === service.slug ? res.data : s));
+      if (updateModal) {
+        setSelectedService(res.data);
+      }
+      alert('Photo successfully updated!');
+    } catch (err) {
+      alert('Failed to update photo: ' + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  const handleDeleteServiceImage = async (service, updateModal = false) => {
+    if (!window.confirm("Are you sure you want to remove this service's illustration photo?")) return;
+    const formData = new FormData();
+    formData.append('title', service.title);
+    formData.append('slug', service.slug);
+    formData.append('description', service.description);
+    formData.append('detail_text', service.detail_text);
+    formData.append('process', service.process);
+    formData.append('benefits', service.benefits);
+    formData.append('equipment', service.equipment);
+    formData.append('technical_specifications', service.technical_specifications || '');
+    formData.append('equipment_details', service.equipment_details || '');
+    formData.append('sample_photos_json', service.sample_photos_json || '[]');
+    formData.append('image', '');
+
+    try {
+      const res = await api.put(`/services/${service.slug}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setServices(prev => prev.map(s => s.slug === service.slug ? res.data : s));
+      if (updateModal) {
+        setSelectedService(res.data);
+      }
+      alert('Photo successfully deleted!');
+    } catch (err) {
+      alert('Failed to delete photo: ' + (err.response?.data?.detail || err.message));
+    }
+  };
 
   useEffect(() => {
     // Log visitor hit
@@ -74,8 +135,8 @@ export default function Services() {
 
       {/* Services Grid */}
       {loading ? (
-        <div className="flex items-center justify-center h-60">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-survey-gold" />
+        <div className="w-full pt-8">
+          <Skeleton type="card" count={6} />
         </div>
       ) : (
         <motion.div 
@@ -93,13 +154,45 @@ export default function Services() {
             >
               <div className="space-y-4">
                 {/* Image block */}
-                <div className="h-44 w-full rounded-lg bg-cover bg-center overflow-hidden bg-slate-100 dark:bg-zinc-800 relative">
-                  <div 
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                    style={{ backgroundImage: `url('${service.image_url}')` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent" />
-                </div>
+                  <div className="h-44 w-full rounded-lg bg-cover bg-center overflow-hidden bg-slate-100 dark:bg-zinc-800 relative">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                      style={{ backgroundImage: `url('${service.image || service.image_url}')` }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent" />
+                    
+                    {/* Admin change/delete photo overlay */}
+                    {isAdmin && (
+                      <div className="absolute top-2 right-2 flex space-x-1.5 z-10">
+                        <label 
+                          className="p-1.5 bg-slate-900/80 backdrop-blur-sm text-white rounded-lg hover:bg-slate-800 transition cursor-pointer shadow border border-white/10"
+                          title="Replace Illustration"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleUpdateServiceImage(service, e.target.files[0])}
+                          />
+                          <Camera size={14} />
+                        </label>
+                        {(service.image || service.image_url) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteServiceImage(service);
+                            }}
+                            className="p-1.5 bg-red-650/90 hover:bg-red-700 text-white rounded-lg transition shadow border border-red-500/20"
+                            title="Delete Illustration"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                 
                 {/* Details */}
                 <div className="space-y-2">
@@ -147,15 +240,43 @@ export default function Services() {
               <div className="relative h-60 md:h-80 shrink-0">
                 <div 
                   className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url('${selectedService.image_url}')` }}
+                  style={{ backgroundImage: `url('${selectedService.image || selectedService.image_url}')` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
+                
+                {/* Admin controls for modal banner photo */}
+                {isAdmin && (
+                  <div className="absolute top-4 left-4 flex space-x-2 z-10">
+                    <label className="flex items-center space-x-1 px-3 py-1.5 bg-slate-950/70 hover:bg-slate-900/90 text-white rounded-lg text-xs font-bold cursor-pointer border border-white/10 transition shadow">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => handleUpdateServiceImage(selectedService, e.target.files[0], true)}
+                      />
+                      <Camera size={12} />
+                      <span>Change Photo</span>
+                    </label>
+                    {(selectedService.image || selectedService.image_url) && (
+                      <button
+                        onClick={() => handleDeleteServiceImage(selectedService, true)}
+                        className="flex items-center space-x-1 px-3 py-1.5 bg-red-650/90 hover:bg-red-700 text-white rounded-lg text-xs font-bold border border-red-500/20 transition shadow"
+                        title="Delete photo"
+                      >
+                        <Trash2 size={12} />
+                        <span>Delete</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <button
                   onClick={() => setSelectedService(null)}
                   className="absolute top-4 right-4 p-2 bg-slate-950/70 text-white rounded-full hover:bg-slate-900/90 transition shadow border border-white/10"
                 >
                   <X size={20} />
                 </button>
+
                 <div className="absolute bottom-6 left-6 text-left">
                   <h2 className="text-2xl md:text-4xl font-extrabold text-white">{selectedService.title}</h2>
                   <p className="text-xs md:text-sm text-survey-gold font-semibold uppercase tracking-wider mt-1">
@@ -225,6 +346,64 @@ export default function Services() {
                     <span>Book This Survey</span>
                   </Link>
                 </div>
+
+                {/* Technical Specifications */}
+                {selectedService.technical_specifications && (
+                  <div className="space-y-2 border-t border-slate-100 dark:border-zinc-800 pt-4">
+                    <h3 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">Technical Specifications</h3>
+                    <p className="text-slate-600 dark:text-zinc-300 text-sm leading-relaxed whitespace-pre-line">
+                      {selectedService.technical_specifications}
+                    </p>
+                  </div>
+                )}
+
+                {/* Detailed Equipment Specifications */}
+                {selectedService.equipment_details && (
+                  <div className="space-y-2 border-t border-slate-100 dark:border-zinc-800 pt-4">
+                    <h3 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">Detailed Equipment Specifications</h3>
+                    <p className="text-slate-600 dark:text-zinc-300 text-sm leading-relaxed whitespace-pre-line">
+                      {selectedService.equipment_details}
+                    </p>
+                  </div>
+                )}
+
+                {/* Sample Photos Grid */}
+                {(() => {
+                  let photos = [];
+                  if (selectedService.sample_photos_json) {
+                    try {
+                      photos = JSON.parse(selectedService.sample_photos_json);
+                    } catch (e) {
+                      console.error("Error parsing sample_photos_json:", e);
+                    }
+                  }
+                  if (photos && photos.length > 0) {
+                    return (
+                      <div className="space-y-3 border-t border-slate-100 dark:border-zinc-800 pt-4">
+                        <h3 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">Field Work & Sample Photos</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                          {photos.map((photo, pIdx) => (
+                            <div key={pIdx} className="group/photo relative border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-zinc-800/30 shadow-sm">
+                              <div className="aspect-[4/3] w-full overflow-hidden bg-slate-100 dark:bg-zinc-900 relative">
+                                <img 
+                                  src={photo.url} 
+                                  alt={photo.caption || "Sample Survey Photo"}
+                                  className="object-cover w-full h-full transition-transform duration-300 group-hover/photo:scale-105"
+                                />
+                              </div>
+                              {photo.caption && (
+                                <div className="p-3 bg-white dark:bg-zinc-900 text-xs text-slate-600 dark:text-zinc-400 border-t border-slate-100 dark:border-zinc-800/45">
+                                  {photo.caption}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
               </div>
 
