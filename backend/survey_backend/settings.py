@@ -38,7 +38,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-9jr10r5gmiui57+4^0($-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['deccan-digital-surveys.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
