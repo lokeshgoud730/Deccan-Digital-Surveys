@@ -44,11 +44,11 @@ class Booking(models.Model):
     ]
     customer_name = models.CharField(max_length=200)
     mobile_number = models.CharField(max_length=20)
-    email = models.EmailField()
-    survey_type = models.CharField(max_length=150)
-    property_location = models.TextField()
+    email = models.EmailField(blank=True, null=True)
+    survey_type = models.CharField(max_length=150, blank=True, null=True, default="Land Survey")
+    property_location = models.TextField(blank=True, null=True)
     coordinates = models.CharField(max_length=100, blank=True, null=True, help_text="Format: lat,lng")
-    survey_date = models.DateField()
+    survey_date = models.DateField(blank=True, null=True)
     additional_notes = models.TextField(blank=True, null=True)
     land_document = models.FileField(upload_to='bookings/documents/', blank=True, null=True)
     property_image = models.ImageField(upload_to='bookings/images/', blank=True, null=True)
@@ -56,9 +56,14 @@ class Booking(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     assigned_surveyor = models.ForeignKey('TeamMember', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Simplified booking fields
+    acres = models.FloatField(null=True, blank=True)
+    village = models.CharField(max_length=250, blank=True, null=True)
+    district = models.CharField(max_length=250, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.customer_name} - {self.survey_type} ({self.survey_date})"
+        return f"{self.customer_name} - {self.survey_type or 'Simplified Survey'} ({self.survey_date or self.created_at.date()})"
 
 class GalleryImage(models.Model):
     title = models.CharField(max_length=200)

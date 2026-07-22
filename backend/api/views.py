@@ -151,31 +151,55 @@ class BookingViewSet(viewsets.ModelViewSet):
             return Response({'error': 'No active booking record found matching these parameters.'}, status=status.HTTP_404_NOT_FOUND)
 
     def perform_create(self, serializer):
+        # Default empty fields before saving
+        data = serializer.validated_data
+        
+        # If property_location is not provided, populate it with village and district
+        if not data.get('property_location'):
+            village = data.get('village', '')
+            district = data.get('district', '')
+            parts = []
+            if village:
+                parts.append(f"Village: {village}")
+            if district:
+                parts.append(f"District: {district}")
+            data['property_location'] = ", ".join(parts) or "Not Specified"
+            
+        # If survey_type is not provided, default to "Land Survey"
+        if not data.get('survey_type'):
+            data['survey_type'] = "Land Survey"
+            
+        # If survey_date is not provided, default to today's date
+        if not data.get('survey_date'):
+            from django.utils import timezone
+            data['survey_date'] = timezone.now().date()
+
         booking = serializer.save()
 
         # 1. Customer Email
-        customer_subject = f"Booking Confirmed - Deccan Digital Surveys"
-        customer_message = (
-            f"Dear {booking.customer_name},\n\n"
-            f"Thank you for booking your survey with Deccan Digital Surveys.\n"
-            f"Here are your booking details:\n"
-            f"- Survey Type: {booking.survey_type}\n"
-            f"- Preferred Date: {booking.survey_date}\n"
-            f"- Location: {booking.property_location}\n"
-            f"- Booking Status: PENDING\n\n"
-            f"Our team will contact you shortly to review your uploaded files and confirm the schedule.\n\n"
-            f"Best regards,\nDeccan Digital Surveys Team"
-        )
-        try:
-            send_mail(
-                customer_subject,
-                customer_message,
-                settings.DEFAULT_FROM_EMAIL or 'noreply@deccandigitalsurveys.com',
-                [booking.email],
-                fail_silently=True
+        if booking.email:
+            customer_subject = f"Booking Confirmed - Deccan Digital Surveys"
+            customer_message = (
+                f"Dear {booking.customer_name},\n\n"
+                f"Thank you for booking your survey with Deccan Digital Surveys.\n"
+                f"Here are your booking details:\n"
+                f"- Survey Type: {booking.survey_type}\n"
+                f"- Preferred Date: {booking.survey_date}\n"
+                f"- Location: {booking.property_location}\n"
+                f"- Booking Status: PENDING\n\n"
+                f"Our team will contact you shortly to review your details and confirm the schedule.\n\n"
+                f"Best regards,\nDeccan Digital Surveys Team"
             )
-        except Exception as e:
-            print(f"Error sending customer email: {e}")
+            try:
+                send_mail(
+                    customer_subject,
+                    customer_message,
+                    settings.DEFAULT_FROM_EMAIL or 'noreply@deccandigitalsurveys.com',
+                    [booking.email],
+                    fail_silently=True
+                )
+            except Exception as e:
+                print(f"Error sending customer email: {e}")
 
         # 2. Admin Email
         admin_subject = f"New Survey Booking Alert - {booking.customer_name}"
@@ -184,12 +208,15 @@ class BookingViewSet(viewsets.ModelViewSet):
             f"A new survey booking has been submitted online:\n"
             f"- Customer Name: {booking.customer_name}\n"
             f"- Mobile Number: {booking.mobile_number}\n"
-            f"- Email: {booking.email}\n"
+            f"- Email: {booking.email or 'N/A'}\n"
+            f"- Acres: {booking.acres or 'N/A'}\n"
+            f"- Village: {booking.village or 'N/A'}\n"
+            f"- District: {booking.district or 'N/A'}\n"
             f"- Survey Type: {booking.survey_type}\n"
             f"- Date: {booking.survey_date}\n"
             f"- Location: {booking.property_location}\n"
             f"- Notes: {booking.additional_notes or 'None'}\n\n"
-            f"Please log in to the admin panel to view details and download uploaded documents.\n\n"
+            f"Please log in to the admin panel to view details.\n\n"
             f"System Alert Services"
         )
         try:

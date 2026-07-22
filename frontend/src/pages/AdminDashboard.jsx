@@ -547,9 +547,11 @@ export default function AdminDashboard() {
   const filteredBookings = bookings.filter(b => {
     const query = searchQuery.toLowerCase();
     const matchQuery = 
-      b.customer_name.toLowerCase().includes(query) ||
-      b.mobile_number.includes(query) ||
-      b.survey_type.toLowerCase().includes(query);
+      (b.customer_name && b.customer_name.toLowerCase().includes(query)) ||
+      (b.mobile_number && b.mobile_number.includes(query)) ||
+      (b.survey_type && b.survey_type.toLowerCase().includes(query)) ||
+      (b.village && b.village.toLowerCase().includes(query)) ||
+      (b.district && b.district.toLowerCase().includes(query));
     
     if (statusFilter === 'All') return matchQuery;
     return matchQuery && b.status === statusFilter;
@@ -945,13 +947,22 @@ export default function AdminDashboard() {
                         <td className="py-4 px-4 font-mono font-bold text-slate-400">#{b.id}</td>
                         <td className="py-4 px-4">
                           <p className="font-bold text-slate-900 dark:text-zinc-100">{b.customer_name}</p>
-                          <p className="text-[10px] text-slate-400">{b.mobile_number} | {b.email}</p>
+                          <p className="text-[10px] text-slate-400">{b.mobile_number}{b.email ? ` | ${b.email}` : ''}</p>
                         </td>
                         <td className="py-4 px-4">
-                          <p className="font-bold text-slate-800 dark:text-zinc-200">{b.survey_type}</p>
-                          <p className="text-[10px] text-slate-450 line-clamp-1">{b.property_location}</p>
+                          {b.acres ? (
+                            <>
+                              <p className="font-bold text-slate-800 dark:text-zinc-200">{b.acres} Acres</p>
+                              <p className="text-[10px] text-slate-450 line-clamp-1">Village: {b.village}, District: {b.district}</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="font-bold text-slate-800 dark:text-zinc-200">{b.survey_type || 'Land Survey'}</p>
+                              <p className="text-[10px] text-slate-450 line-clamp-1">{b.property_location}</p>
+                            </>
+                          )}
                         </td>
-                        <td className="py-4 px-4 font-mono">{b.survey_date}</td>
+                        <td className="py-4 px-4 font-mono">{b.survey_date || new Date(b.created_at).toLocaleDateString()}</td>
                         <td className="py-4 px-4">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                             b.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400' :
@@ -2097,13 +2108,23 @@ export default function AdminDashboard() {
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Customer Details</h4>
                     <p className="font-bold text-slate-900 dark:text-zinc-100 mt-1">{viewingBooking.customer_name}</p>
                     <p className="text-xs text-slate-500 mt-0.5">Phone: {viewingBooking.mobile_number}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Email: {viewingBooking.email}</p>
+                    {viewingBooking.email && <p className="text-xs text-slate-500 mt-0.5">Email: {viewingBooking.email}</p>}
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Survey Specifications</h4>
-                    <p className="font-bold text-slate-900 dark:text-zinc-100 mt-1">{viewingBooking.survey_type}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Proposed Date: {viewingBooking.survey_date}</p>
-                    <p className="text-xs text-primary dark:text-blue-400 font-bold mt-0.5">Coordinates: {viewingBooking.coordinates || 'Not Pinned'}</p>
+                    {viewingBooking.acres ? (
+                      <>
+                        <p className="font-bold text-slate-900 dark:text-zinc-100 mt-1">{viewingBooking.acres} Acres</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Village: {viewingBooking.village}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">District: {viewingBooking.district}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-bold text-slate-900 dark:text-zinc-100 mt-1">{viewingBooking.survey_type || 'Land Survey'}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Proposed Date: {viewingBooking.survey_date}</p>
+                        <p className="text-xs text-primary dark:text-blue-400 font-bold mt-0.5">Coordinates: {viewingBooking.coordinates || 'Not Pinned'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
 
