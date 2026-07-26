@@ -59,5 +59,6 @@ typing_extensions==4.15.0
 tzdata==2026.3
 uvicorn==0.48.0
 wcwidth==0.6.0
+django-cors-headers==4.3.1
 
 # Fixed for deployment
