@@ -1,4 +1,4 @@
-annotated-doc==0.0.4
+﻿annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.12.1
 asgiref==3.12.1
@@ -12,6 +12,7 @@ decorator==5.2.1
 distro==1.9.0
 dj-database-url==3.1.2
 Django==6.0.7
+django-cors-headers==4.9.0
 djangorestframework==3.17.1
 executing==2.2.1
 fastapi==0.136.3
@@ -60,5 +61,3 @@ tzdata==2026.3
 uvicorn==0.48.0
 wcwidth==0.6.0
 django-cors-headers==4.3.1
-
-# Fixed for deployment
