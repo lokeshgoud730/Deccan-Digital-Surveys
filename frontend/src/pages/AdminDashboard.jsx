@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../api';
+import api, { BACKEND_URL } from '../api';
 import { 
   Calendar, Check, X, Trash2, Mail, Users, Image as ImageIcon, 
   Settings, LogOut, Search, FileText, BarChart2, Plus, Info, Edit, 
@@ -2159,7 +2159,7 @@ export default function AdminDashboard() {
                       </div>
                       {viewingBooking.land_document && (
                         <a
-                          href={`http://127.0.0.1:8000${viewingBooking.land_document}`}
+                          href={`${BACKEND_URL}${viewingBooking.land_document}`}
                           target="_blank"
                           rel="noreferrer"
                           className="p-1 text-primary hover:bg-slate-200 rounded"
@@ -2178,7 +2178,7 @@ export default function AdminDashboard() {
                       </div>
                       {viewingBooking.property_image && (
                         <a
-                          href={`http://127.0.0.1:8000${viewingBooking.property_image}`}
+                          href={`${BACKEND_URL}${viewingBooking.property_image}`}
                           target="_blank"
                           rel="noreferrer"
                           className="p-1 text-primary hover:bg-slate-200 rounded"
@@ -2197,7 +2197,7 @@ export default function AdminDashboard() {
                       </div>
                       {viewingBooking.location_sketch && (
                         <a
-                          href={`http://127.0.0.1:8000${viewingBooking.location_sketch}`}
+                          href={`${BACKEND_URL}${viewingBooking.location_sketch}`}
                           target="_blank"
                           rel="noreferrer"
                           className="p-1 text-primary hover:bg-slate-200 rounded"

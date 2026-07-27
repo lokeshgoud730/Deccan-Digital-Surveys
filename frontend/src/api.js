@@ -6,10 +6,18 @@ const getApiBaseUrl = () => {
   }
   // Dynamically align host to prevent SameSite cookie issues (localhost vs 127.0.0.1)
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
-  return `http://${hostname}:8000/api`;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `http://${hostname}:8000/api`;
+  }
+  return 'https://deccan-digital-surveys-backend.onrender.com/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+// Base backend URL for static files / media uploads (without trailing /api)
+export const BACKEND_URL = API_BASE_URL.endsWith('/api') 
+  ? API_BASE_URL.slice(0, -4) 
+  : API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -18,6 +26,7 @@ const api = axios.create({
   },
   withCredentials: true,
 });
+
 
 // Interceptor to handle automatic token refresh
 api.interceptors.response.use(
