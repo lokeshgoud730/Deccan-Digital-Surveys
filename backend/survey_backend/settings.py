@@ -178,9 +178,15 @@ SIMPLE_JWT = {
 # CORS configuration
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://frontend-mu-drab-81.vercel.app",
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://frontend-mu-drab-81.vercel.app",
+]
+
 
 # Real SMTP email backend configuration (defaults to console backend if host user is not defined)
 if os.environ.get('EMAIL_HOST_USER'):

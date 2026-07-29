@@ -113,8 +113,12 @@ class WebsiteSettingsViewSet(viewsets.ModelViewSet):
 class ServiceContentViewSet(viewsets.ModelViewSet):
     queryset = ServiceContent.objects.all().order_by('id')
     serializer_class = ServiceContentSerializer
-    permission_classes = [IsAdminOrReadOnly]
     lookup_field = 'slug'
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
 
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all().order_by('-created_at')
@@ -258,7 +262,11 @@ class BookingViewSet(viewsets.ModelViewSet):
 class GalleryImageViewSet(viewsets.ModelViewSet):
     queryset = GalleryImage.objects.all().order_by('-uploaded_at')
     serializer_class = GalleryImageSerializer
-    permission_classes = [IsAdminOrReadOnly]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
 
 class TestimonialViewSet(viewsets.ModelViewSet):
     queryset = Testimonial.objects.all().order_by('-created_at')
