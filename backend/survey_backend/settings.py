@@ -37,9 +37,9 @@ if env_path.exists():
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-9jr10r5gmiui57+4^0($-5teqj*mirk_+$(-6u)rb(qgf*5s=6')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ['deccan-digital-surveys.onrender.com', 'deccan-digital-surveys-backend.onrender.com', 'localhost', '127.0.0.1', '*']
+ALLOWED_HOSTS = ['deccan-digital-surveys.onrender.com', 'deccan-digital-surveys-backend.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
