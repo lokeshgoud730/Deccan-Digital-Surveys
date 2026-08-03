@@ -1,13 +1,10 @@
 services:
   - type: web
-    name: deccan-digital-surveys-backend
-    runtime: python
-    buildCommand: cd backend && pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput
-    startCommand: gunicorn --chdir backend survey_backend.wsgi:application
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: DEBUG
-        value: "False"
-      - key: SECRET_KEY
-        generateValue: true
+    name: deccan-digital-surveys
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    publishPath: frontend/dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
