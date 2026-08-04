@@ -30,6 +30,27 @@ const uploadFile = async (file) => {
   return publicUrl;
 };
 
+// Helper to clean payloads for PostgreSQL compatibility
+const cleanObject = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  const cleaned = { ...obj };
+  
+  if ('image' in cleaned) {
+    cleaned.image_url = cleaned.image;
+    delete cleaned.image;
+  }
+  
+  if ('hero_image' in cleaned) {
+    cleaned.hero_image_url = cleaned.hero_image;
+    delete cleaned.hero_image;
+  }
+  
+  // Strip primary key id if it's sent during inserts or updates
+  delete cleaned.id;
+  
+  return cleaned;
+};
+
 // Helper to parse FormData
 const parseFormData = async (formData) => {
   const data = {};
@@ -37,8 +58,14 @@ const parseFormData = async (formData) => {
     if (value instanceof File && value.name) {
       const url = await uploadFile(value);
       if (url) {
-        data[key] = url;
-        data[`${key}_url`] = url;
+        if (key === 'image') {
+          data['image_url'] = url;
+        } else if (key === 'hero_image') {
+          data['hero_image_url'] = url;
+        } else {
+          data[key] = url;
+          data[`${key}_url`] = url;
+        }
       }
     } else {
       if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
@@ -48,7 +75,13 @@ const parseFormData = async (formData) => {
           data[key] = value;
         }
       } else {
-        data[key] = value;
+        if (key === 'image') {
+          data['image_url'] = value;
+        } else if (key === 'hero_image') {
+          data['hero_image_url'] = value;
+        } else {
+          data[key] = value;
+        }
       }
     }
   }
@@ -486,7 +519,7 @@ const api = {
 
     // 5. General Submissions
     if (cleanUrl === '/bookings') {
-      const bookingData = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const bookingData = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       
       if (!bookingData.property_location) {
         bookingData.property_location = `Village: ${bookingData.village || ''}, District: ${bookingData.district || ''}`;
@@ -500,14 +533,14 @@ const api = {
     }
 
     if (cleanUrl === '/enquiry') {
-      const enquiryData = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const enquiryData = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data, error } = await supabase.from('enquiries').insert([enquiryData]).select().single();
       if (error) throw error;
       return { data };
     }
 
     if (cleanUrl === '/testimonials') {
-      const testimonialData = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const testimonialData = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data, error } = await supabase.from('testimonials').insert([testimonialData]).select().single();
       if (error) throw error;
       return { data };
@@ -515,28 +548,28 @@ const api = {
 
     // CMS CRUDs
     if (cleanUrl === '/services') {
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('service_content').insert([data]).select().single();
       if (error) throw error;
       return { data: row };
     }
 
     if (cleanUrl === '/gallery') {
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('gallery_images').insert([data]).select().single();
       if (error) throw error;
       return { data: row };
     }
 
     if (cleanUrl === '/team') {
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('team_members').insert([data]).select().single();
       if (error) throw error;
       return { data: row };
     }
 
     if (cleanUrl === '/experience') {
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('experience_items').insert([data]).select().single();
       if (error) throw error;
       return { data: row };
@@ -552,7 +585,7 @@ const api = {
     const settingsMatch = cleanUrl.match(/^\/settings\/(\d+)$/);
     if (settingsMatch) {
       const id = parseInt(settingsMatch[1]);
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('website_settings').update(data).eq('id', id).select().single();
       if (error) throw error;
       return { data: row };
@@ -562,7 +595,7 @@ const api = {
     const bookingMatch = cleanUrl.match(/^\/bookings\/(\d+)$/);
     if (bookingMatch) {
       const id = parseInt(bookingMatch[1]);
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       
       delete data.surveyor_name;
       delete data.surveyor_role;
@@ -576,7 +609,7 @@ const api = {
     const serviceMatch = cleanUrl.match(/^\/services\/([a-zA-Z0-9_-]+)$/);
     if (serviceMatch) {
       const slug = serviceMatch[1];
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('service_content').update(data).eq('slug', slug).select().single();
       if (error) throw error;
       return { data: row };
@@ -586,7 +619,7 @@ const api = {
     const galleryMatch = cleanUrl.match(/^\/gallery\/(\d+)$/);
     if (galleryMatch) {
       const id = parseInt(galleryMatch[1]);
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('gallery_images').update(data).eq('id', id).select().single();
       if (error) throw error;
       return { data: row };
@@ -596,7 +629,7 @@ const api = {
     const teamMatch = cleanUrl.match(/^\/team\/(\d+)$/);
     if (teamMatch) {
       const id = parseInt(teamMatch[1]);
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('team_members').update(data).eq('id', id).select().single();
       if (error) throw error;
       return { data: row };
@@ -606,7 +639,7 @@ const api = {
     const testimonialMatch = cleanUrl.match(/^\/testimonials\/(\d+)$/);
     if (testimonialMatch) {
       const id = parseInt(testimonialMatch[1]);
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('testimonials').update(data).eq('id', id).select().single();
       if (error) throw error;
       return { data: row };
@@ -616,7 +649,7 @@ const api = {
     const experienceMatch = cleanUrl.match(/^\/experience\/(\d+)$/);
     if (experienceMatch) {
       const id = parseInt(experienceMatch[1]);
-      const data = payload instanceof FormData ? await parseFormData(payload) : payload;
+      const data = cleanObject(payload instanceof FormData ? await parseFormData(payload) : payload);
       const { data: row, error } = await supabase.from('experience_items').update(data).eq('id', id).select().single();
       if (error) throw error;
       return { data: row };
