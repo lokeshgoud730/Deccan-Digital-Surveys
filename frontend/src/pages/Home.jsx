@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
 import {
   Compass, CheckCircle, ShieldCheck, Cpu, ArrowRight, X, Calendar,
-  MapPin, Check, ChevronDown, User, Star, Quote, HelpCircle, Layers
+  MapPin, Check, ChevronDown, User, Star, Quote, HelpCircle, Layers,
+  Camera, Trash2
 } from 'lucide-react';
 import Onboarding from '../components/Onboarding';
 
@@ -62,6 +63,60 @@ export default function Home() {
       console.error('Error fetching home data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const isAdmin = localStorage.getItem('is_admin') === 'true';
+
+  const handleUpdateServiceImage = async (service, file) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('title', service.title);
+    formData.append('slug', service.slug);
+    formData.append('description', service.description);
+    formData.append('detail_text', service.detail_text);
+    formData.append('process', service.process);
+    formData.append('benefits', service.benefits);
+    formData.append('equipment', service.equipment);
+    formData.append('technical_specifications', service.technical_specifications || '');
+    formData.append('equipment_details', service.equipment_details || '');
+    formData.append('sample_photos_json', service.sample_photos_json || '[]');
+    formData.append('image', file);
+
+    try {
+      const res = await api.put(`/services/${service.slug}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setServices(prev => prev.map(s => s.slug === service.slug ? res.data : s));
+      alert('Photo successfully updated!');
+    } catch (err) {
+      alert('Failed to update photo: ' + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  const handleDeleteServiceImage = async (service) => {
+    if (!window.confirm("Are you sure you want to remove this service's illustration photo?")) return;
+    const formData = new FormData();
+    formData.append('title', service.title);
+    formData.append('slug', service.slug);
+    formData.append('description', service.description);
+    formData.append('detail_text', service.detail_text);
+    formData.append('process', service.process);
+    formData.append('benefits', service.benefits);
+    formData.append('equipment', service.equipment);
+    formData.append('technical_specifications', service.technical_specifications || '');
+    formData.append('equipment_details', service.equipment_details || '');
+    formData.append('sample_photos_json', service.sample_photos_json || '[]');
+    formData.append('image', '');
+
+    try {
+      const res = await api.put(`/services/${service.slug}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setServices(prev => prev.map(s => s.slug === service.slug ? res.data : s));
+      alert('Photo successfully deleted!');
+    } catch (err) {
+      alert('Failed to delete photo: ' + (err.response?.data?.detail || err.message));
     }
   };
 
@@ -267,6 +322,37 @@ export default function Home() {
                       <span className="absolute bottom-3 left-4 text-[10px] bg-primary text-white font-bold px-2 py-0.5 rounded shadow-sm">
                         SERVICE #{index + 1}
                       </span>
+                      
+                      {/* Admin change/delete photo overlay */}
+                      {isAdmin && (
+                        <div className="absolute top-2 right-2 flex space-x-1.5 z-10">
+                          <label 
+                            className="p-1.5 bg-slate-900/80 backdrop-blur-sm text-white rounded-lg hover:bg-slate-800 transition cursor-pointer shadow border border-white/10"
+                            title="Replace Illustration"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => handleUpdateServiceImage(service, e.target.files[0])}
+                            />
+                            <Camera size={14} />
+                          </label>
+                          {(service.image || service.image_url) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteServiceImage(service);
+                              }}
+                              className="p-1.5 bg-red-650/90 hover:bg-red-700 text-white rounded-lg transition shadow border border-red-500/20"
+                              title="Delete Illustration"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Description */}
