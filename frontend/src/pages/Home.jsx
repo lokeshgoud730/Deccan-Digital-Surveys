@@ -120,6 +120,58 @@ export default function Home() {
     }
   };
 
+  const handleUpdateHeroImage = async (file) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('hero_title', settings.hero_title);
+    formData.append('hero_subtitle', settings.hero_subtitle);
+    formData.append('hero_primary_btn', settings.hero_primary_btn);
+    formData.append('hero_secondary_btn', settings.hero_secondary_btn);
+    formData.append('about_description', settings.about_description);
+    formData.append('about_mission', settings.about_mission || '');
+    formData.append('about_vision', settings.about_vision || '');
+    formData.append('stat_experience_years', settings.stat_experience_years);
+    formData.append('stat_projects_completed', settings.stat_projects_completed);
+    formData.append('stat_clients_served', settings.stat_clients_served);
+    formData.append('hero_image', file);
+
+    try {
+      const res = await api.put(`/settings/${settings.id}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setSettings(res.data);
+      alert('Hero banner image successfully updated!');
+    } catch (err) {
+      alert('Failed to update hero image: ' + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  const handleDeleteHeroImage = async () => {
+    if (!window.confirm("Are you sure you want to delete the custom hero image?")) return;
+    const formData = new FormData();
+    formData.append('hero_title', settings.hero_title);
+    formData.append('hero_subtitle', settings.hero_subtitle);
+    formData.append('hero_primary_btn', settings.hero_primary_btn);
+    formData.append('hero_secondary_btn', settings.hero_secondary_btn);
+    formData.append('about_description', settings.about_description);
+    formData.append('about_mission', settings.about_mission || '');
+    formData.append('about_vision', settings.about_vision || '');
+    formData.append('stat_experience_years', settings.stat_experience_years);
+    formData.append('stat_projects_completed', settings.stat_projects_completed);
+    formData.append('stat_clients_served', settings.stat_clients_served);
+    formData.append('hero_image', '');
+
+    try {
+      const res = await api.put(`/settings/${settings.id}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setSettings(res.data);
+      alert('Hero banner image successfully deleted!');
+    } catch (err) {
+      alert('Failed to delete hero image: ' + (err.response?.data?.detail || err.message));
+    }
+  };
+
   const handleMove = (clientX, rect) => {
     const x = clientX - rect.left;
     const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
@@ -255,6 +307,31 @@ export default function Home() {
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">TELANGANA & AP REGION</p>
                   <p className="text-sm font-extrabold text-slate-900 dark:text-white mt-1">Direct Land Surveying using base DGPS stations & robotic CAD levels.</p>
                 </div>
+
+                {/* Admin controls overlay for hero image */}
+                {isAdmin && (
+                  <div className="absolute top-4 right-4 flex space-x-2 z-10">
+                    <label className="flex items-center space-x-1 px-3 py-1.5 bg-slate-950/80 hover:bg-slate-900/90 text-white rounded-lg text-xs font-bold cursor-pointer border border-white/10 transition shadow">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => handleUpdateHeroImage(e.target.files[0])}
+                      />
+                      <Camera size={12} />
+                      <span>Replace Hero Image</span>
+                    </label>
+                    {(settings.hero_image || settings.hero_image_url) && (
+                      <button
+                        onClick={handleDeleteHeroImage}
+                        className="flex items-center space-x-1 px-3 py-1.5 bg-red-650/90 hover:bg-red-700 text-white rounded-lg text-xs font-bold border border-red-500/20 transition shadow"
+                        title="Delete hero image"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                )}
               </motion.div>
             </div>
 
