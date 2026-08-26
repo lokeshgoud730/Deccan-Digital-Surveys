@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../api';
+import api, { supabase, logVisitor } from '../api';
 import { Plus, Trash2, Eye, X, ZoomIn, ZoomOut, Upload, Loader, FileImage } from 'lucide-react';
 import Skeleton from '../components/Skeleton';
 
@@ -24,7 +24,7 @@ export default function Gallery() {
 
   useEffect(() => {
     // Log visitor hit
-    api.post('/log-visitor/', { page: 'Gallery' }).catch(() => {});
+    logVisitor('Gallery');
 
     // Check if user is logged in
     setIsAdmin(localStorage.getItem('is_admin') === 'true');
@@ -32,17 +32,17 @@ export default function Gallery() {
     fetchGallery();
   }, []);
 
-  const fetchGallery = () => {
+  const fetchGallery = async () => {
     setLoading(true);
-    api.get('/gallery/')
-      .then((res) => {
-        setImages(res.data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Error fetching gallery:', err);
-        setLoading(false);
-      });
+    try {
+      const { data, error } = await supabase.from('gallery_images').select('*').order('uploaded_at', { ascending: false });
+      if (error) throw error;
+      setImages(data || []);
+    } catch (err) {
+      console.error('Error fetching gallery:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDrag = (e) => {

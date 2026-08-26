@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import api from '../api';
+import api, { logVisitor } from '../api';
 import { Target, Eye, Award, CheckCircle, Users } from 'lucide-react';
 
 export default function About() {
@@ -9,7 +9,7 @@ export default function About() {
 
   useEffect(() => {
     // Log visitor hit
-    api.post('/log-visitor/', { page: 'About' }).catch(() => {});
+    logVisitor('About');
 
     // Fetch About Us content from Settings CMS
     api.get('/settings/')

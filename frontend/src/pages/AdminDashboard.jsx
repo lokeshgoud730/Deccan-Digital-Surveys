@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import api, { BACKEND_URL } from '../api';
+import api, { BACKEND_URL, logVisitor } from '../api';
 import { 
   Calendar, Check, X, Trash2, Mail, Users, Image as ImageIcon, 
   Settings, LogOut, Search, FileText, BarChart2, Plus, Info, Edit, 
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     // Log visitor hit
-    api.post('/log-visitor/', { page: 'Admin Dashboard' }).catch(() => {});
+    logVisitor('Admin Dashboard');
     loadDashboardData();
   }, []);
 

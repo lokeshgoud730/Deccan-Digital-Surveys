@@ -7,6 +7,19 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const BACKEND_URL = '';
 
+export const logVisitor = async (pageName) => {
+  let ip = '127.0.5.1'; // local placeholder
+  try {
+    const ipRes = await fetch('https://api.ipify.org?format=json').then(r => r.json());
+    ip = ipRes.ip || '127.0.0.1';
+  } catch (e) {}
+  try {
+    await supabase.from('visitor_stats').insert([{ ip_address: ip, page_visited: pageName || 'Home' }]);
+  } catch (e) {
+    console.error("Failed to log visitor:", e);
+  }
+};
+
 // Helper to upload a file to Supabase Storage
 const uploadFile = async (file) => {
   if (!file) return null;

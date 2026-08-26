@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../api';
+import api, { logVisitor } from '../api';
 import {
   Compass, CheckCircle, ShieldCheck, Cpu, ArrowRight, X, Calendar,
   MapPin, Check, ChevronDown, User, Star, Quote, HelpCircle, Layers,
@@ -35,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     // Log visitor hit
-    api.post('/log-visitor/', { page: 'Home' }).catch(() => { });
+    logVisitor('Home');
     loadPageData();
   }, []);
 

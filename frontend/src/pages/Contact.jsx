@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../api';
+import api, { logVisitor } from '../api';
 import { Phone, MapPin, Compass, MessageSquare, Check, ArrowRight, Loader, Mail } from 'lucide-react';
 
 export default function Contact() {
@@ -17,7 +17,7 @@ export default function Contact() {
 
   useEffect(() => {
     // Log visitor hit
-    api.post('/log-visitor/', { page: 'Contact' }).catch(() => {});
+    logVisitor('Contact');
   }, []);
 
   const handleEnquiry = async (e) => {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../api';
+import api, { logVisitor } from '../api';
 import { Trophy, Calendar, Plus, Trash2, Milestone, Loader, Sparkles, TrendingUp, Compass } from 'lucide-react';
 import Skeleton from '../components/Skeleton';
 
@@ -21,7 +21,7 @@ export default function Experience() {
 
   useEffect(() => {
     // Log visitor hit
-    api.post('/log-visitor/', { page: 'Experience' }).catch(() => {});
+    logVisitor('Experience');
 
     setIsAdmin(localStorage.getItem('is_admin') === 'true');
 

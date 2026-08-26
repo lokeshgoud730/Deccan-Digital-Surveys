@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../api';
+import api, { supabase } from '../api';
 import { 
   User, Phone, MapPin, Layers, Loader, CheckCircle2, 
   ArrowRight, Landmark, FileText, Calendar 
@@ -37,16 +37,20 @@ export default function BookSurvey() {
       mobile_number: mobileNumber,
       acres: parsedAcres,
       village: village,
-      district: district
+      district: district,
+      property_location: `Village: ${village || ''}, District: ${district || ''}`,
+      survey_type: 'Land Survey',
+      status: 'PENDING'
     };
 
     try {
-      const res = await api.post('/bookings/', bookingData);
-      setCreatedBooking(res.data);
+      const { data, error } = await supabase.from('bookings').insert([bookingData]).select().single();
+      if (error) throw error;
+      setCreatedBooking(data);
       setSubmitted(true);
     } catch (err) {
       console.error(err);
-      setErrorMsg(err.response?.data?.detail || 'Failed to submit booking. Please review your input fields.');
+      setErrorMsg(err.message || 'Failed to submit booking. Please review your input fields.');
     } finally {
       setFormLoading(false);
     }
