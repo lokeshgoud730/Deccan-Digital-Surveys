@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api, { supabase, logVisitor } from '../api';
 import { ArrowRight, CheckCircle, Cpu, Calendar, X, Compass, Search, Camera, Trash2 } from 'lucide-react';
 
-const FALLBACK_SERVICES = [
+export const FALLBACK_SERVICES = [
   {
     id: 1,
     title: 'Land Survey',
@@ -247,9 +247,11 @@ export default function Services() {
     // Log visitor hit
     logVisitor('Services');
 
-    // Fetch services from Supabase
+    // Fetch services from Supabase (only required columns)
     setLoading(true);
-    supabase.from('service_content').select('*').order('id', { ascending: true })
+    supabase.from('service_content')
+      .select('id, title, slug, description, detail_text, process, benefits, equipment, image_url, technical_specifications, equipment_details, sample_photos_json')
+      .order('id', { ascending: true })
       .then(({ data, error }) => {
         if (error || !data || data.length === 0) {
           console.warn('Supabase service_content query failed or empty, using fallbacks.');
@@ -335,14 +337,16 @@ export default function Services() {
               whileHover={{ scale: 1.03, y: -4 }}
               transition={{ type: 'spring', stiffness: 300 }}
               onClick={() => setSelectedService(service)}
-              className="group relative cursor-pointer glass border border-slate-200/60 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow hover:shadow-lg dark:hover:shadow-zinc-950/40 p-5 flex flex-col justify-between text-left"
+              className="group relative cursor-pointer glass border border-slate-200/60 dark:border-zinc-800/60 rounded-xl overflow-hidden shadow hover:shadow-lg dark:hover:shadow-zinc-950/40 px-4 py-6 flex flex-col justify-between text-left"
             >
               <div className="space-y-4">
                 {/* Image block */}
                   <div className="h-44 w-full rounded-lg bg-cover bg-center overflow-hidden bg-slate-100 dark:bg-zinc-800 relative">
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                      style={{ backgroundImage: `url('${service.image || service.image_url}')` }}
+                    <img 
+                      src={service.image || service.image_url}
+                      alt={service.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent" />
                     
@@ -423,9 +427,11 @@ export default function Services() {
               
               {/* Modal Banner */}
               <div className="relative h-60 md:h-80 shrink-0">
-                <div 
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url('${selectedService.image || selectedService.image_url}')` }}
+                <img 
+                  src={selectedService.image || selectedService.image_url}
+                  alt={selectedService.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
                 

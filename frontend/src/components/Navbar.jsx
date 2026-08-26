@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { Menu, X, Sun, Moon, Briefcase, FileCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logo.svg';
 
 export default function Navbar() {
@@ -104,34 +105,42 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Links Overlay */}
-      {isOpen && (
-        <div className="md:hidden glass px-2 pt-2 pb-4 space-y-1 shadow-lg border-t border-slate-200/50 dark:border-zinc-800/50">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              onClick={() => setIsOpen(false)}
-              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                isActive(link.path)
-                  ? 'bg-primary/10 text-primary dark:bg-survey-gold/10 dark:text-survey-gold font-bold'
-                  : 'text-slate-700 hover:bg-slate-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
-          {localStorage.getItem('is_admin') === 'true' && (
-            <Link
-              to="/admin"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium bg-emerald-600/10 text-emerald-600 dark:text-emerald-400"
-            >
-              <Briefcase size={16} />
-              <span>Admin Dashboard</span>
-            </Link>
-          )}
-        </div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+            className="md:hidden glass px-2 pt-2 pb-4 space-y-1 shadow-lg border-t border-slate-200/50 dark:border-zinc-800/50 overflow-hidden"
+          >
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.path}
+                onClick={() => setIsOpen(false)}
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  isActive(link.path)
+                    ? 'bg-primary/10 text-primary dark:bg-survey-gold/10 dark:text-survey-gold font-bold'
+                    : 'text-slate-700 hover:bg-slate-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            {localStorage.getItem('is_admin') === 'true' && (
+              <Link
+                to="/admin"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium bg-emerald-600/10 text-emerald-600 dark:text-emerald-400"
+              >
+                <Briefcase size={16} />
+                <span>Admin Dashboard</span>
+              </Link>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

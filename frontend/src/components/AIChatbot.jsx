@@ -52,17 +52,17 @@ export default function AIChatbot() {
   };
 
   return (
-    <div className="fixed bottom-6 left-6 z-40 text-left font-sans">
+    <div className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 text-left font-sans">
       
       {/* 1. Toggle Float Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="w-12 h-12 bg-primary hover:bg-primary-dark text-white rounded-full flex items-center justify-center shadow-lg border border-white/20 hover:shadow-xl transition-shadow"
+        className="w-10 h-10 sm:w-12 sm:h-12 bg-primary hover:bg-primary-dark text-white rounded-full flex items-center justify-center shadow-lg border border-white/20 hover:shadow-xl transition-shadow shadow-primary/20"
         title="Chat with AI Assistant"
       >
-        {isOpen ? <X size={20} /> : <MessageSquare size={20} />}
+        {isOpen ? <X size={18} className="sm:w-5 sm:h-5" /> : <MessageSquare size={18} className="sm:w-5 sm:h-5" />}
       </motion.button>
 
       {/* 2. Chat Window Container */}
@@ -72,7 +72,7 @@ export default function AIChatbot() {
             initial={{ opacity: 0, scale: 0.9, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 50 }}
-            className="absolute bottom-16 left-0 w-80 sm:w-96 h-[450px] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden glass z-50"
+            className="absolute bottom-12 sm:bottom-16 left-0 w-[calc(100vw-32px)] sm:w-96 h-[390px] sm:h-[450px] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden glass z-50"
           >
             {/* Header */}
             <div className="bg-primary text-white p-4 flex items-center justify-between shrink-0">

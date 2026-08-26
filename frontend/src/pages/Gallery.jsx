@@ -5,7 +5,36 @@ import { Plus, Trash2, Eye, X, ZoomIn, ZoomOut, Upload, Loader, FileImage } from
 import Skeleton from '../components/Skeleton';
 
 export default function Gallery() {
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState([
+    {
+      id: 1,
+      title: 'Layout Demarcation',
+      description: 'Staking out road boundaries and plot marking using DGPS in Jangaon project.',
+      image_url: '/images/gallery/layout_demarcation.png',
+      category: 'Layout'
+    },
+    {
+      id: 2,
+      title: 'Highway Contour Survey',
+      description: 'Contour mapping for regional highway widening using Total Stations.',
+      image_url: '/images/gallery/highway_contour.png',
+      category: 'Road & Rail'
+    },
+    {
+      id: 3,
+      title: 'DGPS Base Station Setup',
+      description: 'Setting up the CHCNAV DGPS base station for sub-centimeter boundary plotting.',
+      image_url: '/images/gallery/dgps_setup.png',
+      category: 'Land'
+    },
+    {
+      id: 4,
+      title: 'Topographic Drone Survey',
+      description: 'Aerial mapping of 150-acre venture development project for contour extraction.',
+      image_url: '/images/gallery/drone_mapping.png',
+      category: 'Drone Mapping'
+    }
+  ]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
   const [lightboxImage, setLightboxImage] = useState(null);
@@ -35,7 +64,7 @@ export default function Gallery() {
   const fetchGallery = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('gallery_images').select('*').order('uploaded_at', { ascending: false });
+      const { data, error } = await supabase.from('gallery_images').select('id, title, description, image_url, category').order('uploaded_at', { ascending: false });
       if (error) throw error;
       setImages(data || []);
     } catch (err) {
@@ -298,9 +327,11 @@ export default function Gallery() {
                 }}
               >
                 {/* Photo */}
-                <div 
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                  style={{ backgroundImage: `url('${imgPath}')` }}
+                <img 
+                  src={imgPath}
+                  alt={img.title}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 

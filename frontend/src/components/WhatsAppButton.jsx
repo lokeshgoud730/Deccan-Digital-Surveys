@@ -11,14 +11,14 @@ export default function WhatsAppButton() {
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-110 group cursor-pointer"
+      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-110 group cursor-pointer"
       title="Chat on WhatsApp"
     >
       {/* Pulse Rings */}
       <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping -z-10 group-hover:hidden" />
       
       {/* Icon */}
-      <MessageCircle size={28} className="fill-white stroke-none" />
+      <MessageCircle size={24} className="fill-white stroke-none sm:w-7 sm:h-7" />
       
       {/* Tooltip */}
       <span className="absolute right-16 scale-0 group-hover:scale-100 transition-all duration-200 origin-right bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded shadow-md whitespace-nowrap dark:bg-zinc-800">

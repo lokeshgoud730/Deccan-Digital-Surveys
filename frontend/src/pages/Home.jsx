@@ -1,13 +1,57 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import api, { logVisitor } from '../api';
+import api, { supabase, logVisitor } from '../api';
+import { FALLBACK_SERVICES } from './Services';
 import {
   Compass, CheckCircle, ShieldCheck, Cpu, ArrowRight, X, Calendar,
   MapPin, Check, ChevronDown, User, Star, Quote, HelpCircle, Layers,
   Camera, Trash2
 } from 'lucide-react';
-import Onboarding from '../components/Onboarding';
+
+const FALLBACK_TESTIMONIALS = [
+  {
+    id: 1,
+    client_name: 'Lokesh Goud',
+    role: 'Property Developer',
+    review_text: 'Deccan Digital Surveys did an amazing job mapping our 50-acre venture. The DGPS coordinate accuracy saved us boundary disputes and got our layouts cleared quickly by HMDA.',
+    rating: 5,
+    image_url: '/images/testimonials/avatar1.png'
+  },
+  {
+    id: 2,
+    client_name: 'Srinivas Reddy',
+    role: 'Agriculturalist',
+    review_text: 'Resolved a 10-year agricultural boundary dispute in Siddipet in just one afternoon. They compared revenue Tippon sheets with high-precision RTK coordinates. Excellent and polite team.',
+    rating: 5,
+    image_url: '/images/testimonials/avatar2.png'
+  },
+  {
+    id: 3,
+    client_name: 'Anitha Rao',
+    role: 'Villa Venture Owner',
+    review_text: 'Very professional, fast delivery of CAD drafts and contour elevations. Essential partner for modern architectural layouts and DTCP approval drawings.',
+    rating: 5,
+    image_url: '/images/testimonials/avatar3.png'
+  }
+];
+
+const FALLBACK_TEAM = [
+  {
+    id: 1,
+    name: 'K. Raghupathy',
+    role: 'Founder & Lead Surveyor',
+    image_url: '/images/team/raghu.png',
+    bio: 'Over 15 years of land and revenue surveying experience. Specialist in Tippon coordinates mapping and regional zoning compliance.'
+  },
+  {
+    id: 2,
+    name: 'M. Sandeep',
+    role: 'DGPS Specialist Engineer',
+    image_url: '/images/team/sandeep.png',
+    bio: 'Expert in dual-frequency satellite GNSS/RTK systems and 3D terrain surface contour profiling.'
+  }
+];
 
 export default function Home() {
   const [settings, setSettings] = useState({
@@ -20,9 +64,9 @@ export default function Home() {
     stat_projects_completed: "1,200+",
     stat_clients_served: "950+"
   });
-  const [services, setServices] = useState([]);
-  const [testimonials, setTestimonials] = useState([]);
-  const [team, setTeam] = useState([]);
+  const [services, setServices] = useState(FALLBACK_SERVICES);
+  const [testimonials, setTestimonials] = useState(FALLBACK_TESTIMONIALS);
+  const [team, setTeam] = useState(FALLBACK_TEAM);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(null);
 
@@ -42,23 +86,44 @@ export default function Home() {
   const loadPageData = async () => {
     setLoading(true);
     try {
-      // Fetch settings
-      const settingsRes = await api.get('/settings/');
-      if (settingsRes.data && settingsRes.data.length > 0) {
-        setSettings(settingsRes.data[0]);
+      // 1. Fetch website settings (1 row, only required columns)
+      const { data: settingsData } = await supabase
+        .from('website_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      if (settingsData) {
+        setSettings(settingsData);
       }
 
-      // Fetch services
-      const servicesRes = await api.get('/services/');
-      setServices(servicesRes.data);
+      // 2. Fetch services (only essential info for cards)
+      const { data: servicesData } = await supabase
+        .from('service_content')
+        .select('*')
+        .order('id', { ascending: true });
+      if (servicesData && servicesData.length > 0) {
+        setServices(servicesData);
+      }
 
-      // Fetch testimonials
-      const testimonialsRes = await api.get('/testimonials/');
-      setTestimonials(testimonialsRes.data);
+      // 3. Fetch testimonials (limit to 6)
+      const { data: testimonialsData } = await supabase
+        .from('testimonials')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(6);
+      if (testimonialsData && testimonialsData.length > 0) {
+        setTestimonials(testimonialsData);
+      }
 
-      // Fetch team
-      const teamRes = await api.get('/team/');
-      setTeam(teamRes.data);
+      // 4. Fetch team (limit to 6)
+      const { data: teamData } = await supabase
+        .from('team_members')
+        .select('*')
+        .order('id', { ascending: true })
+        .limit(6);
+      if (teamData && teamData.length > 0) {
+        setTeam(teamData);
+      }
     } catch (err) {
       console.error('Error fetching home data:', err);
     } finally {
@@ -299,9 +364,12 @@ export default function Home() {
                   </div>
                 </div>
                 {/* Real image overlay */}
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url('${settings.hero_image || settings.hero_image_url || '/images/hero_bg.png'}')` }}
+                <img
+                  src={settings.hero_image || '/images/hero_bg.png'}
+                  alt="Deccan Digital Surveys Hero Banner"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="eager"
+                  fetchpriority="high"
                 />
                 <div className="absolute bottom-6 left-6 right-6 p-4 glass rounded-xl text-left border border-white/20">
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">TELANGANA & AP REGION</p>
@@ -321,7 +389,7 @@ export default function Home() {
                       <Camera size={12} />
                       <span>Replace Hero Image</span>
                     </label>
-                    {(settings.hero_image || settings.hero_image_url) && (
+                    {settings.hero_image && (
                       <button
                         onClick={handleDeleteHeroImage}
                         className="flex items-center space-x-1 px-3 py-1.5 bg-red-650/90 hover:bg-red-700 text-white rounded-lg text-xs font-bold border border-red-500/20 transition shadow"
@@ -364,93 +432,89 @@ export default function Home() {
             </p>
           </div>
 
-          {services.length === 0 ? (
-            <div className="flex items-center justify-center h-60">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-            </div>
-          ) : (
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-16"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-            >
-              {services.map((service, index) => (
-                <motion.div
-                  key={service.id}
-                  whileHover={{ y: -6 }}
-                  onClick={() => setSelectedService(service)}
-                  className="group relative cursor-pointer bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/60 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all p-6 flex flex-col justify-between"
-                >
-                  <div className="space-y-4">
-                    {/* Service Graphic */}
-                    <div className="h-44 w-full rounded-xl bg-slate-100 dark:bg-zinc-800 overflow-hidden relative">
-                      {(service.image || service.image_url) ? (
-                        <div
-                          className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                          style={{ backgroundImage: `url('${service.image || service.image_url}')` }}
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-blue-600/5 text-blue-600">
-                          <Layers size={36} />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent" />
-                      <span className="absolute bottom-3 left-4 text-[10px] bg-primary text-white font-bold px-2 py-0.5 rounded shadow-sm">
-                        SERVICE #{index + 1}
-                      </span>
-                      
-                      {/* Admin change/delete photo overlay */}
-                      {isAdmin && (
-                        <div className="absolute top-2 right-2 flex space-x-1.5 z-10">
-                          <label 
-                            className="p-1.5 bg-slate-900/80 backdrop-blur-sm text-white rounded-lg hover:bg-slate-800 transition cursor-pointer shadow border border-white/10"
-                            title="Replace Illustration"
-                            onClick={(e) => e.stopPropagation()}
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+          >
+            {services.map((service, index) => (
+              <motion.div
+                key={service.id}
+                whileHover={{ y: -6 }}
+                onClick={() => setSelectedService(service)}
+                className="group relative cursor-pointer bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800/60 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all px-4 py-6 flex flex-col justify-between"
+              >
+                <div className="space-y-4">
+                  {/* Service Graphic */}
+                  <div className="h-44 w-full rounded-xl bg-slate-100 dark:bg-zinc-800 overflow-hidden relative">
+                    {service.image_url ? (
+                      <img
+                        src={service.image_url}
+                        alt={service.title}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-blue-600/5 text-blue-600">
+                        <Layers size={36} />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent" />
+                    <span className="absolute bottom-3 left-4 text-[10px] bg-primary text-white font-bold px-2 py-0.5 rounded shadow-sm">
+                      SERVICE #{index + 1}
+                    </span>
+                    
+                    {/* Admin change/delete photo overlay */}
+                    {isAdmin && (
+                      <div className="absolute top-2 right-2 flex space-x-1.5 z-10">
+                        <label 
+                          className="p-1.5 bg-slate-900/80 backdrop-blur-sm text-white rounded-lg hover:bg-slate-800 transition cursor-pointer shadow border border-white/10"
+                          title="Replace Illustration"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleUpdateServiceImage(service, e.target.files[0])}
+                          />
+                          <Camera size={14} />
+                        </label>
+                        {service.image_url && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteServiceImage(service);
+                            }}
+                            className="p-1.5 bg-red-650/90 hover:bg-red-700 text-white rounded-lg transition shadow border border-red-500/20"
+                            title="Delete Illustration"
                           >
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
-                              onChange={(e) => handleUpdateServiceImage(service, e.target.files[0])}
-                            />
-                            <Camera size={14} />
-                          </label>
-                          {(service.image || service.image_url) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteServiceImage(service);
-                              }}
-                              className="p-1.5 bg-red-650/90 hover:bg-red-700 text-white rounded-lg transition shadow border border-red-500/20"
-                              title="Delete Illustration"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    <div className="space-y-2 text-left">
-                      <h3 className="font-extrabold text-lg group-hover:text-primary dark:group-hover:text-blue-400 transition-colors line-clamp-1 text-slate-900 dark:text-zinc-50">
-                        {service.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-3">
-                        {service.description}
-                      </p>
-                    </div>
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center space-x-1.5 text-xs text-primary dark:text-blue-400 font-bold mt-5 justify-end">
-                    <span>View Specifications</span>
-                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  {/* Description */}
+                  <div className="space-y-2 text-left">
+                    <h3 className="font-extrabold text-lg group-hover:text-primary dark:group-hover:text-blue-400 transition-colors line-clamp-1 text-slate-900 dark:text-zinc-50">
+                      {service.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 line-clamp-3">
+                      {service.description}
+                    </p>
                   </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
+                </div>
+
+                <div className="flex items-center space-x-1.5 text-xs text-primary dark:text-blue-400 font-bold mt-5 justify-end">
+                  <span>View Specifications</span>
+                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
@@ -477,18 +541,11 @@ export default function Home() {
             >
               {/* After: demarcated layout (Full background) */}
               <div className="absolute inset-0 bg-slate-200 flex items-center justify-center">
-                {/* Fallback Graphic grid */}
-                <div className="absolute inset-0 bg-slate-50 dark:bg-zinc-900 flex flex-col items-center justify-center p-8">
-                  <div className="w-full h-full border-2 border-emerald-500/30 rounded bg-emerald-500/5 relative">
-                    <div className="absolute top-1/4 left-1/4 px-2 py-1 bg-emerald-500 text-white font-mono text-[10px] rounded">Plot #04: Verified (34.20m x 25.10m)</div>
-                    <div className="absolute bottom-1/4 right-1/4 px-2 py-1 bg-emerald-500 text-white font-mono text-[10px] rounded">Plot #05: Verified (34.20m x 25.10m)</div>
-                    <div className="absolute inset-0 grid grid-cols-4 grid-rows-3 border-collapse border border-emerald-500/20" />
-                  </div>
-                </div>
-                {/* Visual Representation Image */}
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url('/images/gallery/layout_demarcation.png')` }}
+                <img
+                  src="/images/gallery/layout_demarcation.png"
+                  alt="After survey layout coordinate demarcation mapping"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
                 />
                 <span className="absolute bottom-4 right-4 bg-emerald-600 text-white font-bold text-xs px-3 py-1 rounded shadow">
                   AFTER: Demarcated layout boundary mapping
@@ -500,14 +557,11 @@ export default function Home() {
                 className="absolute inset-0 bg-slate-300 pointer-events-none transition-all duration-75"
                 style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }}
               >
-                {/* Fallback Graphic before */}
-                <div className="absolute inset-0 bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
-                  <p className="text-slate-400 font-extrabold text-xl">RAW SITE LAND</p>
-                </div>
-                {/* Visual Representation Image */}
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url('/images/gallery/drone_mapping.png')` }}
+                <img
+                  src="/images/gallery/drone_mapping.png"
+                  alt="Before raw site land unmapped boundary confusion"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
                 />
                 <span className="absolute bottom-4 left-4 bg-red-600 text-white font-bold text-xs px-3 py-1 rounded shadow">
                   BEFORE: Unmapped land / boundary confusion
@@ -541,55 +595,32 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.length === 0 ? (
-              // Fallback dummy testimonials if not loaded
-              [1, 2, 3].map((num) => (
-                <div key={num} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-slate-200/50 dark:border-zinc-800/50 shadow-sm text-left flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div className="flex text-amber-500">
-                      {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
-                    </div>
-                    <p className="text-slate-600 dark:text-zinc-300 italic text-sm leading-relaxed">
-                      "Deccan Digital Surveys did an amazing job resolving our property boundaries in Siddipet. Precision DGPS coordinates saved us weeks of legal disputes."
-                    </p>
+            {testimonials.map((t) => (
+              <div key={t.id} className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-slate-200/50 dark:border-zinc-800/50 shadow-sm text-left flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex text-amber-500">
+                    {[...Array(Math.min(5, Math.max(1, parseInt(t.rating) || 5)))].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
                   </div>
-                  <div className="flex items-center space-x-3 mt-6 pt-4 border-t border-slate-100 dark:border-zinc-850">
-                    <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center font-bold text-xs">U</div>
-                    <div>
-                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">Lokesh Goud</h4>
-                      <p className="text-[10px] text-slate-400">Property Owner</p>
+                  <p className="text-slate-600 dark:text-zinc-300 italic text-sm leading-relaxed relative">
+                    <Quote className="absolute -top-3 -left-3 text-slate-100 dark:text-zinc-800 -z-0" size={32} />
+                    <span className="relative z-10">"{t.review_text}"</span>
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3 mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800">
+                  {t.image_url ? (
+                    <img src={t.image_url} alt={t.client_name} className="w-10 h-10 rounded-full object-cover shrink-0" loading="lazy" />
+                  ) : (
+                    <div className="w-10 h-10 bg-blue-600/10 text-primary rounded-full flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                      {(t.client_name || 'C').charAt(0)}
                     </div>
+                  )}
+                  <div>
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{t.client_name}</h4>
+                    <p className="text-[10px] text-slate-400">{t.role || 'Client'}</p>
                   </div>
                 </div>
-              ))
-            ) : (
-              testimonials.map((t) => (
-                <div key={t.id} className="bg-white dark:bg-zinc-900 p-8 rounded-2xl border border-slate-200/50 dark:border-zinc-800/50 shadow-sm text-left flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div className="flex text-amber-500">
-                      {[...Array(Math.min(5, Math.max(1, parseInt(t.rating) || 5)))].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
-                    </div>
-                    <p className="text-slate-600 dark:text-zinc-300 italic text-sm leading-relaxed relative">
-                      <Quote className="absolute -top-3 -left-3 text-slate-100 dark:text-zinc-800 -z-0" size={32} />
-                      <span className="relative z-10">"{t.review_text}"</span>
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-3 mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800">
-                    {(t.image || t.image_url) ? (
-                      <img src={t.image || t.image_url} alt={t.client_name} className="w-10 h-10 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 bg-blue-600/10 text-primary rounded-full flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                        {(t.client_name || 'C').charAt(0)}
-                      </div>
-                    )}
-                    <div>
-                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">{t.client_name}</h4>
-                      <p className="text-[10px] text-slate-400">{t.role || 'Client'}</p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -606,40 +637,25 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-8">
-            {team.length === 0 ? (
-              // Fallback team
-              [1, 2].map((num) => (
-                <div key={num} className="bg-slate-50 dark:bg-zinc-900 rounded-2xl border border-slate-200/50 dark:border-zinc-800/50 overflow-hidden max-w-[280px] w-full p-4 space-y-4 shadow-sm">
-                  <div className="h-48 w-full bg-slate-200 dark:bg-zinc-800 rounded-xl flex items-center justify-center">
-                    <User size={48} className="text-slate-400" />
-                  </div>
-                  <div className="text-center">
-                    <h4 className="font-extrabold text-slate-900 dark:text-white">Survey Engineer</h4>
-                    <p className="text-xs text-slate-400">DGPS Field Specialist</p>
-                  </div>
+            {team.map((member) => (
+              <div key={member.id} className="bg-slate-50 dark:bg-zinc-900 rounded-2xl border border-slate-200/50 dark:border-zinc-800/50 overflow-hidden max-w-[320px] w-full p-5 space-y-4 shadow-sm hover:shadow-md transition-shadow text-left">
+                <div className="h-56 w-full bg-slate-200 dark:bg-zinc-800 rounded-xl flex items-center justify-center overflow-hidden relative">
+                  <User size={64} className="text-slate-300 absolute" />
+                  {member.image_url && (
+                    <img src={member.image_url} alt={member.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                  )}
                 </div>
-              ))
-            ) : (
-              team.map((member) => (
-                <div key={member.id} className="bg-slate-50 dark:bg-zinc-900 rounded-2xl border border-slate-200/50 dark:border-zinc-800/50 overflow-hidden max-w-[320px] w-full p-5 space-y-4 shadow-sm hover:shadow-md transition-shadow text-left">
-                  <div className="h-56 w-full bg-slate-200 dark:bg-zinc-800 rounded-xl flex items-center justify-center overflow-hidden relative">
-                    <User size={64} className="text-slate-300 absolute" />
-                    {(member.image || member.image_url) && (
-                      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${member.image || member.image_url}')` }} />
-                    )}
-                  </div>
-                  <div className="space-y-1.5">
-                    <h4 className="font-extrabold text-base text-slate-900 dark:text-white">{member.name}</h4>
-                    <p className="text-xs text-primary dark:text-blue-400 font-bold uppercase tracking-wider">{member.role}</p>
-                    {member.bio && (
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed pt-2 border-t border-slate-200/50 dark:border-zinc-800/50">
-                        {member.bio}
-                      </p>
-                    )}
-                  </div>
+                <div className="space-y-1.5">
+                  <h4 className="font-extrabold text-base text-slate-900 dark:text-white">{member.name}</h4>
+                  <p className="text-xs text-primary dark:text-blue-400 font-bold uppercase tracking-wider">{member.role}</p>
+                  {member.bio && (
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed pt-2 border-t border-slate-200/50 dark:border-zinc-800/50">
+                      {member.bio}
+                    </p>
+                  )}
                 </div>
-              ))
-            )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -708,15 +724,17 @@ export default function Home() {
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-zinc-900 max-w-4xl w-full rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 max-h-[90vh] flex flex-col"
+              className="bg-white dark:bg-zinc-900 max-w-4xl w-full rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 max-h-[90vh] flex, flex-col"
             >
 
               {/* Modal Banner */}
               <div className="relative h-56 md:h-72 shrink-0 bg-slate-100">
                 {selectedService.image_url && (
-                  <div
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url('${selectedService.image_url}')` }}
+                  <img 
+                    src={selectedService.image_url} 
+                    alt={selectedService.title} 
+                    className="h-44 md:h-60 w-full rounded-xl object-cover shrink-0 shadow-inner" 
+                    loading="lazy" 
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent" />
@@ -812,8 +830,6 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <Onboarding />
 
     </div>
   );
